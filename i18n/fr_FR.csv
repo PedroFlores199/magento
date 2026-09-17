@@ -502,3 +502,5 @@ this order is a pickup but carries no pickup location,"cette commande est un ret
 "this order has no billing address, so it cannot be exported","cette commande n'a pas d'adresse de facturation et ne peut donc pas être exportée"
 "this order has no shipping address, so it cannot be exported","cette commande n'a pas d'adresse de livraison et ne peut donc pas être exportée"
 "customs item %1: %2","article douanier %1 : %2"
+"MyParcel reads every product weight with this one unit, so this setting exists in default scope only.","MyParcel lit chaque poids de produit avec cette seule unité, donc ce paramètre n'existe qu'au niveau par défaut."
+"Careful: product weight is not a global attribute in this installation, so a product can weigh a different number per scope. MyParcel still reads every one of them with the unit above.","Attention : le poids n'est pas un attribut global dans cette installation, donc un produit peut peser un nombre différent selon la portée. MyParcel les lit tous avec l'unité ci-dessus."

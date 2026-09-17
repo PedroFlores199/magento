@@ -502,3 +502,5 @@ this order is a pickup but carries no pickup location,"to zamówienie jest odbio
 "this order has no billing address, so it cannot be exported","to zamówienie nie ma adresu rozliczeniowego, więc nie można go wyeksportować"
 "this order has no shipping address, so it cannot be exported","to zamówienie nie ma adresu dostawy, więc nie można go wyeksportować"
 "customs item %1: %2","pozycja celna %1: %2"
+"MyParcel reads every product weight with this one unit, so this setting exists in default scope only.","MyParcel odczytuje każdą wagę produktu w tej jednej jednostce, dlatego to ustawienie istnieje tylko w zakresie domyślnym."
+"Careful: product weight is not a global attribute in this installation, so a product can weigh a different number per scope. MyParcel still reads every one of them with the unit above.","Uwaga: waga nie jest atrybutem globalnym w tej instalacji, więc produkt może ważyć inną liczbę w każdym zakresie. MyParcel odczytuje je wszystkie w jednostce powyżej."
