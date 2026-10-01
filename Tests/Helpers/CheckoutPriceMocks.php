@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Magento\Quote\Model\Quote;
 use MyParcelNL\Magento\Model\Quote\Checkout;
 use MyParcelNL\Magento\Model\Shipment\Capabilities\CapabilitySet;
+use MyParcelNL\Magento\Model\Shipment\Carrier as ShipmentCarrier;
 use MyParcelNL\Magento\Model\Shipment\PackageType;
 use MyParcelNL\Magento\Model\Source\PriceDeliveryOptionsView;
 use MyParcelNL\Magento\Service\CartShippingRules;
@@ -21,7 +22,7 @@ use MyParcelNL\Magento\Service\Tax;
  */
 function checkoutPriceConfig(bool $totalView, array $floatConfig = [], array $configValues = [], string $carrier = 'postnl'): Config
 {
-    $carrierPath = Config::CARRIERS_XML_PATH_MAP[$carrier];
+    $carrierPath = Config::carrierPath($carrier);
 
     $config = Mockery::mock(Config::class);
     $config->shouldReceive('getBoolConfig')->andReturnUsing(static fn ($path) => $carrierPath === $path)->byDefault();
@@ -60,15 +61,16 @@ function checkoutCarrierSettings(Config $config, Tax $tax, DeliveryCosts $delive
     }
 
     $checkout = checkoutWith([
-        'config'           => $config,
-        'tax'              => $tax,
-        'deliveryCosts'    => $deliveryCosts,
-        'packageTypes'     => $packageTypes,
-        'cartRules'        => $cartRules,
-        'quote'            => $quote,
-        'storeId'          => 1,
-        'capabilityLookup' => capabilityLookupWith(CapabilitySet::permissive(), 'NL', 1),
-    ]);
+        'config'              => $config,
+        'tax'                 => $tax,
+        'deliveryCosts'       => $deliveryCosts,
+        'packageTypes'        => $packageTypes,
+        'cartRules'           => $cartRules,
+        'quote'               => $quote,
+        'storeId'             => 1,
+        'contractDefinitions' => storedContractFor(1, [ShipmentCarrier::toV2Name($carrier)]),
+        'capabilityLookup'    => capabilityLookupWith(CapabilitySet::permissive(), 'NL', 1),
+    ]); 
 
     return carrierSettingsOf($checkout, PackageType::PACKAGE_NAME, $carrier);
 }
