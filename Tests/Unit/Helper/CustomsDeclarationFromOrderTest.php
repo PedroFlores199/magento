@@ -6,7 +6,7 @@ use Magento\Framework\DataObject;
 use MyParcelNL\Magento\Helper\CustomsDeclarationFromOrder;
 
 /** The PPS customs path: each line at product weight and at the price paid in the order's currency. */
-function ppsCustomsItems(array $productData, array $config = [], array $itemData = []): array
+function ppsCustomsItems(array $productData, array $config = [], array $itemData = [], string $homeCountry = 'NL'): array
 {
     $item  = createOrderItem($itemData, ['id' => 7] + $productData);
     $order = createOrder([
@@ -19,11 +19,16 @@ function ppsCustomsItems(array $productData, array $config = [], array $itemData
         [7 => '6109.10'],
         [7 => $productData['country_of_manufacture'] ?? null],
         createConfig(['print/weight_indication' => 'gram'] + $config),
-        true
+        true,
+        $homeCountry
     );
 
     return (new CustomsDeclarationFromOrder($order))->createCustomsDeclaration()->items;
 }
+
+it('takes the account\'s home country when no country of origin is set', function () {
+    expect(ppsCustomsItems([], [], [], 'BE')[0]->getCountry())->toBe('BE');
+});
 
 it('takes the country of origin from the product when it has one', function () {
     expect(ppsCustomsItems(['country_of_manufacture' => 'CN'])[0]->getCountry())->toBe('CN');
