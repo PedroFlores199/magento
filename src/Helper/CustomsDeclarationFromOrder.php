@@ -57,17 +57,20 @@ class CustomsDeclarationFromOrder
                 continue;
             }
 
-            $parent     = $item->getParentItem();
-            $productIds = [(int) $product->getId()];
+            $parent         = $item->getParentItem();
+            $productIds     = [(int) $product->getId()];
+            $quantitySource = $item;
 
             if ($parent && CustomsItems::CONFIGURABLE === $parent->getProductType()) {
                 $productIds[] = (int) $parent->getProductId();
+                // Magento ships the parent and never registers qty_shipped on the variant.
+                $quantitySource = $parent;
             }
 
             $lines[] = [
                 'product'    => $product,
-                'amount'     => (int) ($item->getQtyShipped() ?: $item->getQtyOrdered()),
-                'price'      => (float) $item->getPrice(),
+                'amount'     => (int) ($quantitySource->getQtyShipped() ?: $quantitySource->getQtyOrdered()),
+                'price'      => (float) $quantitySource->getPrice(),
                 'productIds' => $productIds,
             ];
         }
