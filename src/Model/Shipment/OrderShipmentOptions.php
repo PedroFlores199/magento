@@ -48,7 +48,6 @@ class OrderShipmentOptions
     private JsonSerializer         $jsonSerializer;
     private Dating                 $dating;
     private Order                  $order;
-    private array                  $options;
     private DefaultOptions         $defaultOptions;
 
     private ?DeliveryOptions $deliveryOptions = null;
@@ -60,7 +59,6 @@ class OrderShipmentOptions
     public function __construct(
         ObjectManagerInterface $objectManager,
         Order                  $order,
-        array                  $options,
         DefaultOptions         $defaultOptions,
         ?int                   $shipmentId = null
     )
@@ -69,7 +67,6 @@ class OrderShipmentOptions
         $this->jsonSerializer = $objectManager->get(JsonSerializer::class);
         $this->dating         = $objectManager->get(Dating::class);
         $this->order          = $order;
-        $this->options        = $options;
         $this->defaultOptions = $defaultOptions;
         $this->shipmentId     = $shipmentId;
     }
@@ -106,7 +103,6 @@ class OrderShipmentOptions
             $this->deliveryOptions(),
             $this->objectManager,
             $this->carrierName(),
-            $this->options,
             $this->shipmentId,
             $this->effectivePackageTypeName()
         ))->resolve());
@@ -129,25 +125,13 @@ class OrderShipmentOptions
     }
 
     /**
-     * Package type precedence: the explicit option, then what the checkout stored, then the
-     * configured default. Nothing here overrides a stored type: the API refuses an option the type
-     * cannot carry.
-     *
-     * An unmapped explicit option falls back to the default. A stored type is the customer's choice,
-     * so one that resolves to no id fails the shipment instead of shipping as another type.
+     * The stored type, else the configured default. A stored type that resolves to no id fails the
+     * shipment instead of shipping as something else.
      *
      * @throws RuntimeException on a stored type that resolves to no id
      */
     public function packageType(): int
     {
-        $explicit = $this->options['package_type'] ?? DefaultOptions::DEFAULT_OPTION_VALUE;
-
-        if (DefaultOptions::DEFAULT_OPTION_VALUE !== $explicit) {
-            return is_numeric($explicit)
-                ? (int) $explicit
-                : (PackageType::toIdOrNull((string) $explicit) ?? $this->defaultOptions->getPackageType());
-        }
-
         $storedType = $this->deliveryOptions()->packageTypeValue();
 
         if ($storedType->isAbsent()) {
@@ -237,18 +221,19 @@ class OrderShipmentOptions
     }
 
     /**
-     * The stored checkout data, with the carrier resolved and a pickup location dropped when the
-     * carrier was overridden: a pickup location is carrier-specific, so an inherited one is no
-     * longer reachable under a different carrier.
+     * The stored delivery options, with the configured default carrier when none is stored. Never
+     * another carrier: DefaultOptions answers the default for data it cannot parse, and a pickup
+     * under that carrier would ship as a home delivery.
      */
     private function storedDeliveryOptions(): array
     {
         $stored = $this->jsonSerializer->unserialize($this->order->getData(Config::FIELD_DELIVERY_OPTIONS) ?? '[]') ?? [];
 
-        return DeliveryOptions::withCarrier(
-            $stored,
-            $this->carrierFromOptions() ?? $this->defaultOptions->getCarrierName()
-        );
+        if (empty($stored['carrier'])) {
+            $stored['carrier'] = $this->defaultOptions->getCarrierName();
+        }
+
+        return $stored;
     }
 
     /**
@@ -269,7 +254,7 @@ class OrderShipmentOptions
                 $e
             );
         } catch (BadMethodCallException $e) {
-            return DeliveryOptions::fromOrderFallback($stored + $this->options);
+            return DeliveryOptions::fromOrderFallback($stored);
         }
     }
 
@@ -287,17 +272,6 @@ class OrderShipmentOptions
         } catch (InvalidArgumentException $e) {
             throw new RuntimeException($e->getMessage(), 0, $e);
         }
-    }
-
-    private function carrierFromOptions(): ?string
-    {
-        if (empty($this->options['carrier'])) {
-            return null;
-        }
-
-        return DefaultOptions::DEFAULT_OPTION_VALUE === $this->options['carrier']
-            ? $this->defaultOptions->getCarrierName()
-            : $this->options['carrier'];
     }
 
     private function flag(?bool $value): int
