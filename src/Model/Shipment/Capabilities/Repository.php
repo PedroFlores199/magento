@@ -16,8 +16,8 @@ use Throwable;
  * Gets capabilities through the cache, per API key and request.
  *
  * - Fail open: any failure returns CapabilitySet::permissive(), so a lookup never stops a label.
- * - Serve stale: success entries never expire, so a failed refresh finds the previous answer.
- *   StoredAnswers keeps a copy outside the cache, so the last answer survives cache:clean.
+ * - Serve stale: success entries expire after SUCCESS_LIFETIME_SECONDS. StoredAnswers keeps a copy
+ *   outside the cache, so a failed refresh still gets the last answer.
  * - A failure is remembered for FAILURE_LIFETIME_SECONDS, and is read after the success entry.
  */
 class Repository
@@ -25,12 +25,14 @@ class Repository
     private const CACHE_ID_PREFIX   = 'myparcel_capabilities_';
     private const FAILURE_ID_PREFIX = 'myparcel_capabilities_failed_';
 
+    /** How long a good answer is cached: the longest a capabilities change takes to reach the shop. */
+    private const SUCCESS_LIFETIME_SECONDS = 10800;
+
     /**
      * How long a failed request is remembered as failed.
      *
-     * Successful entries never expire, but a failure must: without it, an admin form that fans out
-     * over several package types repeats the whole burst on every reload, which is exactly the load
-     * a 429 asks us to stop applying.
+     * Without it, an admin form that fans out over several package types repeats the whole burst on
+     * every reload, which is exactly the load a 429 asks us to stop applying.
      */
     private const FAILURE_LIFETIME_SECONDS = 60;
 
@@ -152,7 +154,7 @@ class Repository
         }
 
         $this->store($apiKey, $requestKey, $results);
-        $this->cache->save((string) json_encode($results), $cacheId, [], null);
+        $this->cache->save((string) json_encode($results), $cacheId, [], self::SUCCESS_LIFETIME_SECONDS);
 
         $set = CapabilitySet::fromApiResults($results);
         $this->logUnknownValues($set);
