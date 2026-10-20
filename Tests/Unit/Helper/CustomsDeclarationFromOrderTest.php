@@ -6,7 +6,13 @@ use Magento\Framework\DataObject;
 use MyParcelNL\Magento\Helper\CustomsDeclarationFromOrder;
 
 /** The Order v1 customs path: each line at product weight and at the price paid in the order's currency. */
-function orderV1CustomsItems(array $productData, array $config = [], array $itemData = [], string $homeCountry = 'NL'): array
+function orderV1CustomsItems(
+    array  $productData,
+    array  $config = [],
+    array  $itemData = [],
+    string $homeCountry = 'NL',
+    array  $attributes = []
+): array
 {
     $item  = createOrderItem($itemData, ['id' => 7] + $productData);
     $order = createOrder([
@@ -16,7 +22,7 @@ function orderV1CustomsItems(array $productData, array $config = [], array $item
     ]);
 
     customsObjectManager(
-        [7 => '6109.10'],
+        ['classification' => [7 => '6109.10']] + $attributes,
         [7 => $productData['country_of_manufacture'] ?? null],
         createConfig(['print/weight_indication' => 'gram'] + $config),
         true,
@@ -56,7 +62,7 @@ it('declares weight and the price paid at line level, multiplied by the quantity
  */
 
 function orderV1ConfigurableCustomsItems(
-    array $classifications,
+    array $attributes,
     array $countries,
     array $parentQty = [],
     array $childQty = []
@@ -76,7 +82,7 @@ function orderV1ConfigurableCustomsItems(
         'getOrderCurrency' => new DataObject(['code' => 'EUR']),
     ]);
 
-    customsObjectManager($classifications, $countries, createConfig(['print/weight_indication' => 'gram']), true);
+    customsObjectManager($attributes, $countries, createConfig(['print/weight_indication' => 'gram']), true);
 
     return (new CustomsDeclarationFromOrder($order))->createCustomsDeclaration()->items;
 }
@@ -86,7 +92,7 @@ it('declares a configurable product once, as the variant, and falls back to the 
     array $countries,
     array $expected
 ) {
-    $items = orderV1ConfigurableCustomsItems($classifications, $countries);
+    $items = orderV1ConfigurableCustomsItems(['classification' => $classifications], $countries);
 
     expect($items)->toHaveCount(1)
         ->and($items[0]->getDescription())->toBe('Caterham Red')
@@ -98,7 +104,7 @@ it('declares a configurable product once, as the variant, and falls back to the 
 
 it('takes a configurable line\'s quantity from the parent, which alone records what shipped', function () {
     $items = orderV1ConfigurableCustomsItems(
-        [9 => '6109.10'],
+        ['classification' => [9 => '6109.10']],
         [9 => 'CN'],
         ['qty_ordered' => 3, 'qty_shipped' => 1],
         ['qty_ordered' => 3, 'qty_shipped' => 0]
@@ -108,3 +114,25 @@ it('takes a configurable line\'s quantity from the parent, which alone records w
         ->and($items[0]->getWeight())->toBe(100)
         ->and($items[0]->getItemValue()['amount'])->toBe(1000);
 });
+
+it('sends the external product reference of a product that has one', function () {
+    $items = orderV1CustomsItems([], [], [], 'NL', ['external_product_reference' => [7 => 'zonos-item-1']]);
+
+    expect($items[0]->getExternalProductReference())->toBe('zonos-item-1');
+});
+
+it('sets no external product reference when the product has none', function () {
+    expect(orderV1CustomsItems([])[0]->getExternalProductReference())->toBeNull();
+});
+
+it('takes a configurable line its external product reference from the variant, or else the parent', function (
+    array $references,
+    string $expected
+) {
+    $items = orderV1ConfigurableCustomsItems(['external_product_reference' => $references], [4 => 'CN', 9 => null]);
+
+    expect($items[0]->getExternalProductReference())->toBe($expected);
+})->with([
+    'the variant has one' => [[4 => 'zonos-parent', 9 => 'zonos-variant'], 'zonos-variant'],
+    'the variant has none' => [[4 => 'zonos-parent'], 'zonos-parent'],
+]);
