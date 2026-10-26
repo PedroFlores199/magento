@@ -53,6 +53,8 @@ class ShipmentOptionsResolver
 
     private DeliveryOptions $deliveryOptions;
 
+    private Dating $dating;
+
     private ?string $cc;
 
     /** Null on the PPS path: a fulfilment order has no Magento shipment yet. */
@@ -93,6 +95,7 @@ class ShipmentOptionsResolver
         $this->cc             = $order->getShippingAddress() ? $order->getShippingAddress()->getCountryId() : null;
         $this->shipmentId     = $shipmentId;
         $this->packageType    = $packageType;
+        $this->dating         = $objectManager->get(Dating::class);
     }
 
     /**
@@ -286,7 +289,7 @@ class ShipmentOptionsResolver
             ],
             [
                 $this->order->getIncrementId(),
-                Dating::convertDeliveryDate($checkoutDate, 'd-m-Y') ?: '',
+                $this->dating->convertDeliveryDate($checkoutDate, $this->order, 'd-m-Y') ?: '',
                 $this->getProductInfo($productInfo, 'product_id'),
                 $this->getProductInfo($productInfo, 'name'),
                 $productInfo ? round($this->getProductInfo($productInfo, 'qty')) : null,
