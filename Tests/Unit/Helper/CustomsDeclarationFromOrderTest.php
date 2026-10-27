@@ -6,7 +6,7 @@ use Magento\Framework\DataObject;
 use MyParcelNL\Magento\Helper\CustomsDeclarationFromOrder;
 
 /** The PPS customs path: each line at product weight and at the price paid in the order's currency. */
-function ppsCustomsItems(array $productData, array $config = [], array $itemData = [], string $homeCountry = 'NL'): array
+function orderV1CustomsItems(array $productData, array $config = [], array $itemData = [], string $homeCountry = 'NL'): array
 {
     $item  = createOrderItem($itemData, ['id' => 7] + $productData);
     $order = createOrder([
@@ -27,20 +27,20 @@ function ppsCustomsItems(array $productData, array $config = [], array $itemData
 }
 
 it('takes the account\'s home country when no country of origin is set', function () {
-    expect(ppsCustomsItems([], [], [], 'BE')[0]->getCountry())->toBe('BE');
+    expect(orderV1CustomsItems([], [], [], 'BE')[0]->getCountry())->toBe('BE');
 });
 
 it('takes the country of origin from the product when it has one', function () {
-    expect(ppsCustomsItems(['country_of_manufacture' => 'CN'])[0]->getCountry())->toBe('CN');
+    expect(orderV1CustomsItems(['country_of_manufacture' => 'CN'])[0]->getCountry())->toBe('CN');
 });
 
 it('falls back to the configured country of origin, not a hardcoded NL', function () {
-    expect(ppsCustomsItems([], ['print/country_of_origin' => 'BE'])[0]->getCountry())->toBe('BE');
+    expect(orderV1CustomsItems([], ['print/country_of_origin' => 'BE'])[0]->getCountry())->toBe('BE');
 });
 
 it('declares weight and the price paid at line level, multiplied by the quantity', function () {
     // The catalog price differs from what the customer paid: the declaration takes the paid price.
-    $items = ppsCustomsItems(
+    $items = orderV1CustomsItems(
         ['country_of_manufacture' => 'CN', 'weight' => 100.0, 'price' => 99.0],
         [],
         ['qty_ordered' => 3, 'price' => 10.0]
@@ -55,7 +55,7 @@ it('declares weight and the price paid at line level, multiplied by the quantity
  * 9 the variant.
  */
 
-function ppsConfigurableCustomsItems(
+function orderV1ConfigurableCustomsItems(
     array $classifications,
     array $countries,
     array $parentQty = [],
@@ -86,7 +86,7 @@ it('declares a configurable product once, as the variant, and falls back to the 
     array $countries,
     array $expected
 ) {
-    $items = ppsConfigurableCustomsItems($classifications, $countries);
+    $items = orderV1ConfigurableCustomsItems($classifications, $countries);
 
     expect($items)->toHaveCount(1)
         ->and($items[0]->getDescription())->toBe('Caterham Red')
@@ -97,7 +97,7 @@ it('declares a configurable product once, as the variant, and falls back to the 
 ]);
 
 it('takes a configurable line\'s quantity from the parent, which alone records what shipped', function () {
-    $items = ppsConfigurableCustomsItems(
+    $items = orderV1ConfigurableCustomsItems(
         [9 => '6109.10'],
         [9 => 'CN'],
         ['qty_ordered' => 3, 'qty_shipped' => 1],
