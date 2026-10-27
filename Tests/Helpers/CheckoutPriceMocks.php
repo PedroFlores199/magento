@@ -11,6 +11,7 @@ use MyParcelNL\Magento\Model\Source\PriceDeliveryOptionsView;
 use MyParcelNL\Magento\Service\CartShippingRules;
 use MyParcelNL\Magento\Service\Config;
 use MyParcelNL\Magento\Service\DeliveryCosts;
+use MyParcelNL\Magento\Service\DropOffSettings;
 use MyParcelNL\Magento\Service\PackageTypeResolver;
 use MyParcelNL\Magento\Service\Tax;
 
@@ -70,6 +71,7 @@ function checkoutCarrierSettings(Config $config, Tax $tax, DeliveryCosts $delive
         'storeId'             => 1,
         'contractDefinitions' => storedContractFor(1, [ShipmentCarrier::toV2Name($carrier)]),
         'storedAccount'       => storedAccountAt('NL'),
+        'dropOffSettings'     => new DropOffSettings($config),
         'capabilityLookup'    => capabilityLookupWith(CapabilitySet::permissive(), 'NL', 1),
     ]);
 
