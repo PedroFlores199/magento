@@ -342,7 +342,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
 
         foreach ($this->getShipmentsCollection() as $shipment) {
             foreach ($tracks[(int) $shipment->getId()] ?? [] as $track) {
-                if (0 < (int) $track->getData('myparcel_consignment_id')) {
+                if (0 < (int) $track->getData(Config::FIELD_MYPARCEL_SHIPMENT_ID)) {
                     $shipmentIds[] = (int) $shipment->getEntityId();
                     break;
                 }
@@ -459,7 +459,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
 
         foreach ($this->tracksByShipmentId() as $tracks) {
             foreach ($tracks as $track) {
-                $shipmentId           = (int) $track->getData('myparcel_consignment_id');
+                $shipmentId           = (int) $track->getData(Config::FIELD_MYPARCEL_SHIPMENT_ID);
                 $trackOf[$shipmentId] = $trackOf[$shipmentId] ?? $track;
             }
         }
@@ -550,7 +550,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
             $magentoTracks = $tracks[(int) $shipment->getId()] ?? [];
 
             foreach ($magentoTracks as $magentoTrack) {
-                if ($magentoTrack->getData('myparcel_consignment_id')) {
+                if ($magentoTrack->getData(Config::FIELD_MYPARCEL_SHIPMENT_ID)) {
                     continue;
                 }
 
@@ -657,7 +657,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
             $parentSeen = [];
 
             foreach ($tracks[(int) $shipment->getId()] ?? [] as $magentoTrack) {
-                $shipmentId = (int) $magentoTrack->getData('myparcel_consignment_id');
+                $shipmentId = (int) $magentoTrack->getData(Config::FIELD_MYPARCEL_SHIPMENT_ID);
 
                 if (0 !== $shipmentId) {
                     // A second row on the same id is a multicollo collo that persist() parked here.
@@ -740,7 +740,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
                     ? $this->newMagentoTrack($entry['shipment'])
                     : array_shift($spare[$parentId]);
 
-                $magentoTrack->setData('myparcel_consignment_id', $colloId);
+                $magentoTrack->setData(Config::FIELD_MYPARCEL_SHIPMENT_ID, $colloId);
                 $this->writeShipmentToTrack($magentoTrack, $collo);
                 $this->trackRepository->save($magentoTrack);
                 $this->forgetTracks();
@@ -820,7 +820,7 @@ abstract class MagentoCollection implements MagentoCollectionInterface
             }
 
             foreach ($tracks[(int) $shipment->getId()] ?? [] as $track) {
-                $myParcelShipmentId = (int) $track->getData('myparcel_consignment_id');
+                $myParcelShipmentId = (int) $track->getData(Config::FIELD_MYPARCEL_SHIPMENT_ID);
 
                 if (0 < $myParcelShipmentId) {
                     // Keyed, not appended: a multicollo's colli share the parent's id until the

@@ -42,7 +42,7 @@ function collectionWhoseFirstTrackCannotSave(): array
             ],
             [
                 'getData' => static function (?string $key = null) use ($myParcelShipmentId) {
-                    return 'myparcel_consignment_id' === $key ? $myParcelShipmentId : null;
+                    return 'myparcel_shipment_id' === $key ? $myParcelShipmentId : null;
                 },
             ]
         );
@@ -111,5 +111,5 @@ it('carries on to the next collo when the track of one collo cannot be saved', f
     $collection->updateMagentoTrack();
 
     expect($saved->created)->toHaveCount(1)
-        ->and($saved->created[0]['data']['myparcel_consignment_id'])->toBe(4244);
+        ->and($saved->created[0]['data'][MyParcelNL\Magento\Service\Config::FIELD_MYPARCEL_SHIPMENT_ID])->toBe(4244);
 });
