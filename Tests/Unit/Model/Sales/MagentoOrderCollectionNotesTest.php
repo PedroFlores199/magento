@@ -8,7 +8,7 @@ use MyParcelNL\Magento\Model\Sales\MagentoCollection;
 use MyParcelNL\Magento\Model\Sales\MagentoOrderCollection;
 
 /**
- * The status-history comments a PPS export sends as order notes.
+ * The status-history comments an Order v1 export sends as order notes.
  *
  * Two queries for the whole batch, not two per order.
  */

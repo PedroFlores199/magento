@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Magento\Framework\DataObject;
 use MyParcelNL\Magento\Helper\CustomsDeclarationFromOrder;
 
-/** The PPS customs path: each line at product weight and at the price paid in the order's currency. */
+/** The Order v1 customs path: each line at product weight and at the price paid in the order's currency. */
 function orderV1CustomsItems(array $productData, array $config = [], array $itemData = [], string $homeCountry = 'NL'): array
 {
     $item  = createOrderItem($itemData, ['id' => 7] + $productData);
