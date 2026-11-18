@@ -33,6 +33,7 @@ use Magento\Shipping\Model\Carrier\CarrierInterface;
 use Magento\Shipping\Model\Rate\ResultFactory;
 use MyParcelNL\Magento\Adapter\DeliveryOptions\ShipmentOptions;
 use MyParcelNL\Magento\Model\Shipment\DeliveryType;
+use MyParcelNL\Magento\Model\Shipment\PackageType;
 use MyParcelNL\Magento\Model\Shipment\ShipmentOption;
 use MyParcelNL\Magento\Service\Config;
 use MyParcelNL\Magento\Service\DeliveryCosts;
@@ -56,13 +57,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     private DeliveryCosts $deliveryCosts;
     private ResultFactory $rateResultFactory;
     private MethodFactory $rateMethodFactory;
-
-    private const PACKAGE_TYPE_TITLES = [
-        'package'       => 'Package',
-        'mailbox'       => 'Mailbox',
-        'digital_stamp' => 'Digital stamp',
-        'package_small' => 'Packet',
-    ];
 
     /**
      * Carrier constructor.
@@ -198,7 +192,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         }
 
         $deliveryTypeTitle = DeliveryType::TITLES[$deliveryOptions->getDeliveryType()] ?? $deliveryOptions->getDeliveryType();
-        $packageTypeTitle  = self::PACKAGE_TYPE_TITLES[$deliveryOptions->getPackageType()] ?? $deliveryOptions->getPackageType();
+        $packageTypeTitle  = PackageType::TITLES[$deliveryOptions->getPackageType()] ?? $deliveryOptions->getPackageType();
 
         ob_start();
         echo $carrierHuman, ' ', __($deliveryTypeTitle), ', ', __($packageTypeTitle);
